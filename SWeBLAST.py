@@ -13,7 +13,7 @@ import requests
 from SWeBLAST_parser import parse
 
 parser = ArgumentParser(description='Cut sequences in a series of windows and BLAST them using BLAST+.')
-parser.add_argument('-i', '--input', metavar='FILE', required=True, help='an input file.')
+parser.add_argument('-i', '--input', metavar='FILE', required=True, help='an input sequence file in FASTA format.')
 parser.add_argument('-o', '--output', metavar='FOLDER', required=True, help='an output folder.')
 parser.add_argument('-p', '--program', default='blastn',
                     choices=['blastn', 'blastp', 'blastx', 'megablast', 'rpsblast'], help='a blast program.')
@@ -118,7 +118,9 @@ def lookup_www(query, output_file):
 
         # end poll while loop
     else:
-        sys.stderr.write('Cannot submit query\n' + req.text + '\n')
+        sys.stderr.write('Cannot submit query.\nBLAST answer:\n\n' + req.text + '\n')
+        if re.search(r'Request-URI\sToo\sLarge', req.text):
+            sys.stderr.write('\nSWeBLAST: Use BLAST+ instead.\n\n')
 
 
 def read_fasta(input_path):
@@ -154,9 +156,8 @@ def get_config():
     elif os.path.exists(os.path.join(home, 'ncbi.ini')):
         ncbi = os.path.join(home, 'ncbi.ini')
     else:
-        raise NameError('Could not find the configuration file')
+        raise NameError('Could not find the NCBI configuration file')
 
-    print('Using local BLAST config file: ' + ncbi)
     config = ConfigParser.ConfigParser()
     config.read(ncbi)
 
@@ -187,7 +188,8 @@ def main():
         print cmd
         cmd = args.program + ' -db ' + args.database + ' -out ' + output_path + ' -query ' + sequence_path
         if args.local:
-            get_config()
+            config = get_config()
+            print('Using local BLAST config file: ' +os.path.join(config.get('BLAST', 'BLASTDB'), args.database))
         else:
             cmd += ' -remote'
 
