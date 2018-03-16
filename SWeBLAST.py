@@ -6,7 +6,11 @@ from argparse import ArgumentParser
 import urllib
 from subprocess import call
 from os.path import expanduser
-import ConfigParser
+
+try:
+    from configparser import ConfigParser
+except ImportError:
+    import ConfigParser
 
 import requests
 
@@ -185,7 +189,7 @@ def main():
             PUT['DATABASE'] = args.database
         PUT['PROGRAM'] = PROGRAMS[args.program]
     else:
-        print cmd
+        print(cmd)
         cmd = args.program + ' -db ' + args.database + ' -out ' + output_path + ' -query ' + sequence_path
         if args.local:
             config = get_config()
